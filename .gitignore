@@ -13,3 +13,7 @@
 
 # Generated files.
 *.npy
+
+build
+caffe_tensorflow.egg-info
+dist
