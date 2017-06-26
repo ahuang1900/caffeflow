@@ -3,8 +3,8 @@
 import os
 import numpy as np
 import argparse
-from kaffe import KaffeError, print_stderr
-from kaffe.tensorflow import TensorFlowTransformer
+from caffeflow import KaffeError, print_stderr
+from caffeflow.tensorflow import TensorFlowTransformer
 
 
 def fatal_error(msg):

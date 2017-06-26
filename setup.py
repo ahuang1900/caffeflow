@@ -5,11 +5,11 @@ from setuptools import setup, find_packages
 import pypandoc
 
 setup(
-    name="caffe-tensorflow",
-    version="0.1.0",
+    name="caffeflow",
+    version="0.1.1",
     description="Utility to convert Caffe models to TensorFlow.",
     long_description=pypandoc.convert('README.md', 'rst'),
-    url="https://github.com/xmartlabs/caffe-tensorflow",
+    url="https://github.com/xmartlabs/caffeflow",
     keywords=["Caffe", "machine learning", "artificial intelligence", "model", "utility", "TensorFlow"],
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -32,7 +32,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'caffe-tensorflow = convert:main',
+            'caffeflow = caffeflow.convert:main',
         ],
     },
     install_requires=[

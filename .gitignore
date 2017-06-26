@@ -16,4 +16,5 @@
 
 build
 caffe_tensorflow.egg-info
+caffeflow.egg-info
 dist

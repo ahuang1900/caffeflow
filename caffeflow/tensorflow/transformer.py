@@ -178,7 +178,7 @@ class TensorFlowEmitter(object):
         return self.prefix + s + '\n'
 
     def emit_imports(self):
-        return self.statement('from kaffe.tensorflow import Network\n')
+        return self.statement('from caffeflow.tensorflow import Network\n')
 
     def emit_class_def(self, name):
         return self.statement('class %s(Network):' % (name))
