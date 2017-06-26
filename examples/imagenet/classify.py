@@ -9,7 +9,7 @@ import dataset
 
 
 def display_results(image_paths, probs):
-    '''Displays the classification results given the class probability for each image'''
+    """Displays the classification results given the class probability for each image"""
     # Get a list of ImageNet class labels
     with open('imagenet-classes.txt', 'rb') as infile:
         class_labels = map(str.strip, infile.readlines())
@@ -26,7 +26,7 @@ def display_results(image_paths, probs):
 
 
 def classify(model_data_path, image_paths):
-    '''Classify the given images using GoogleNet.'''
+    """Classify the given images using GoogleNet."""
 
     # Get the data specifications for the GoogleNet model
     spec = models.get_data_spec(model_class=models.GoogleNet)

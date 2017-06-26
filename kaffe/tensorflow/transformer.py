@@ -10,13 +10,13 @@ from . import network
 
 
 def get_padding_type(kernel_params, input_shape, output_shape):
-    '''Translates Caffe's numeric padding to one of ('SAME', 'VALID').
+    """Translates Caffe's numeric padding to one of ('SAME', 'VALID').
     Caffe supports arbitrary padding values, while TensorFlow only
     supports 'SAME' and 'VALID' modes. So, not all Caffe paddings
     can be translated to TensorFlow. There are some subtleties to
     how the padding edge-cases are handled. These are described here:
     https://github.com/Yangqing/caffe2/blob/master/caffe2/proto/caffe2_legacy.proto
-    '''
+    """
     k_h, k_w, s_h, s_w, p_h, p_w = kernel_params
     s_o_h = np.ceil(input_shape.height / float(s_h))
     s_o_w = np.ceil(input_shape.width / float(s_w))
@@ -30,7 +30,7 @@ def get_padding_type(kernel_params, input_shape, output_shape):
 
 
 class TensorFlowNode(object):
-    '''An intermediate representation for TensorFlow operations.'''
+    """An intermediate representation for TensorFlow operations."""
 
     def __init__(self, op, *args, **kwargs):
         # A string corresponding to the TensorFlow operation
@@ -43,15 +43,15 @@ class TensorFlowNode(object):
         self.node = None
 
     def format(self, arg):
-        '''Returns a string representation for the given value.'''
+        """Returns a string representation for the given value."""
         return "'%s'" % arg if isinstance(arg, basestring) else str(arg)
 
     def pair(self, key, value):
-        '''Returns key=formatted(value).'''
+        """Returns key=formatted(value)."""
         return '%s=%s' % (key, self.format(value))
 
     def emit(self):
-        '''Emits the Python source for this node.'''
+        """Emits the Python source for this node."""
         # Format positional arguments
         args = map(self.format, self.args)
         # Format any keyword arguments

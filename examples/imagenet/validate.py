@@ -1,19 +1,18 @@
 #!/usr/bin/env python
-'''Validates a converted ImageNet model against the ILSVRC12 validation set.'''
+"""Validates a converted ImageNet model against the ILSVRC12 validation set."""
 
 import argparse
 import numpy as np
 import tensorflow as tf
-import os.path as osp
 
 import models
 import dataset
 
 
 def load_model(name):
-    '''Creates and returns an instance of the model given its class name.
+    """Creates and returns an instance of the model given its class name.
     The created model has a single placeholder node for feeding images.
-    '''
+    """
     # Find the model class from its name
     all_models = models.get_models()
     lut = {model.__name__: model for model in all_models}
@@ -35,7 +34,7 @@ def load_model(name):
 
 
 def validate(net, model_path, image_producer, top_k=5):
-    '''Compute the top_k classification accuracy for the given network and images.'''
+    """Compute the top_k classification accuracy for the given network and images."""
     # Get the data specifications for given network
     spec = models.get_data_spec(model_instance=net)
     # Get the input node for feeding in the images
@@ -53,15 +52,15 @@ def validate(net, model_path, image_producer, top_k=5):
     # The total number of images
     total = len(image_producer)
 
-    with tf.Session() as sesh:
+    with tf.Session() as sess:
         coordinator = tf.train.Coordinator()
         # Load the converted parameters
-        net.load(data_path=model_path, session=sesh)
+        net.load(data_path=model_path, session=sess)
         # Start the image processing workers
-        threads = image_producer.start(session=sesh, coordinator=coordinator)
+        threads = image_producer.start(session=sess, coordinator=coordinator)
         # Iterate over and classify mini-batches
-        for (labels, images) in image_producer.batches(sesh):
-            correct += np.sum(sesh.run(top_k_op,
+        for (labels, images) in image_producer.batches(sess):
+            correct += np.sum(sess.run(top_k_op,
                                        feed_dict={input_node: images,
                                                   label_node: labels}))
             count += len(labels)
@@ -71,7 +70,6 @@ def validate(net, model_path, image_producer, top_k=5):
         coordinator.request_stop()
         coordinator.join(threads, stop_grace_period_secs=2)
     print('Top {} Accuracy: {}'.format(top_k, float(correct) / total))
-
 
 
 def main():

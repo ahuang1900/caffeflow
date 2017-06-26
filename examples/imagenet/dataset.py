@@ -1,4 +1,4 @@
-'''Utility functions and classes for handling image datasets.'''
+"""Utility functions and classes for handling image datasets."""
 
 import os.path as osp
 import numpy as np
@@ -6,13 +6,13 @@ import tensorflow as tf
 
 
 def process_image(img, scale, isotropic, crop, mean):
-    '''Crops, scales, and normalizes the given image.
+    """Crops, scales, and normalizes the given image.
     scale : The image wil be first scaled to this size.
             If isotropic is true, the smaller side is rescaled to this,
             preserving the aspect ratio.
     crop  : After scaling, a central crop of this size is taken.
     mean  : Subtracted from the image
-    '''
+    """
     # Rescale
     if isotropic:
         img_shape = tf.to_float(tf.shape(img)[:2])
@@ -31,9 +31,9 @@ def process_image(img, scale, isotropic, crop, mean):
 
 
 class ImageProducer(object):
-    '''
+    """
     Loads and processes batches of images in parallel.
-    '''
+    """
 
     def __init__(self, image_paths, data_spec, num_concurrent=4, batch_size=None, labels=None):
         # The data specifications describe how to process the image
@@ -91,7 +91,7 @@ class ImageProducer(object):
                                                  [enqueue_processed_op] * num_concurrent)
 
     def start(self, session, coordinator, num_concurrent=4):
-        '''Start the processing worker threads.'''
+        """Start the processing worker threads."""
         # Queue all paths
         session.run(self.enqueue_paths_op)
         # Close the path queue
@@ -100,10 +100,10 @@ class ImageProducer(object):
         return self.queue_runner.create_threads(session, coord=coordinator, start=True)
 
     def get(self, session):
-        '''
+        """
         Get a single batch of images along with their indices. If a set of labels were provided,
         the corresponding labels are returned instead of the indices.
-        '''
+        """
         (indices, images) = session.run(self.dequeue_op)
         if self.labels is not None:
             labels = [self.labels[idx] for idx in indices]
@@ -111,7 +111,7 @@ class ImageProducer(object):
         return (indices, images)
 
     def batches(self, session):
-        '''Yield a batch until no more images are left.'''
+        """Yield a batch until no more images are left."""
         for _ in xrange(self.num_batches):
             yield self.get(session=session)
 

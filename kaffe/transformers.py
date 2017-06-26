@@ -1,8 +1,8 @@
-'''
+"""
 A collection of graph transforms.
 
 A transformer is a callable that accepts a graph and returns a transformed version.
-'''
+"""
 
 import numpy as np
 
@@ -12,9 +12,9 @@ from .layers import NodeKind
 
 
 class DataInjector(object):
-    '''
+    """
     Associates parameters loaded from a .caffemodel file with their corresponding nodes.
-    '''
+    """
 
     def __init__(self, def_path, data_path):
         # The .prototxt file defining the graph
@@ -149,9 +149,9 @@ class DataReshaper(object):
 
 
 class SubNodeFuser(object):
-    '''
+    """
     An abstract helper for merging a single-child with its single-parent.
-    '''
+    """
 
     def __call__(self, graph):
         nodes = graph.nodes
@@ -180,18 +180,18 @@ class SubNodeFuser(object):
         return graph.replaced(transformed_nodes)
 
     def is_eligible_pair(self, parent, child):
-        '''Returns true if this parent/child pair is eligible for fusion.'''
+        """Returns true if this parent/child pair is eligible for fusion."""
         raise NotImplementedError('Must be implemented by subclass.')
 
     def merge(self, parent, child):
-        '''Merge the child node into the parent.'''
+        """Merge the child node into the parent."""
         raise NotImplementedError('Must be implemented by subclass')
 
 
 class ReLUFuser(SubNodeFuser):
-    '''
+    """
     Fuses rectified linear units with their parent nodes.
-    '''
+    """
 
     def __init__(self, allowed_parent_types=None):
         # Fuse ReLUs when the parent node is one of the given types.
@@ -207,14 +207,14 @@ class ReLUFuser(SubNodeFuser):
 
 
 class BatchNormScaleBiasFuser(SubNodeFuser):
-    '''
+    """
     The original batch normalization paper includes two learned
     parameters: a scaling factor \gamma and a bias \beta.
     Caffe's implementation does not include these two. However, it is commonly
     replicated by adding a scaling+bias layer immidiately after the batch norm.
 
     This fuser merges the scaling+bias layer with the batch norm.
-    '''
+    """
 
     def is_eligible_pair(self, parent, child):
         return (parent.kind == NodeKind.BatchNorm and child.kind == NodeKind.Scale and
@@ -225,10 +225,10 @@ class BatchNormScaleBiasFuser(SubNodeFuser):
 
 
 class BatchNormPreprocessor(object):
-    '''
+    """
     Prescale batch normalization parameters.
     Concatenate gamma (scale) and beta (bias) terms if set.
-    '''
+    """
 
     def __call__(self, graph):
         for node in graph.nodes:
@@ -251,10 +251,10 @@ class BatchNormPreprocessor(object):
 
 
 class NodeRenamer(object):
-    '''
+    """
     Renames nodes in the graph using a given unary function that
     accepts a node and returns its new name.
-    '''
+    """
 
     def __init__(self, renamer):
         self.renamer = renamer
@@ -266,9 +266,9 @@ class NodeRenamer(object):
 
 
 class ParameterNamer(object):
-    '''
+    """
     Convert layer data arrays to a dictionary mapping parameter names to their values.
-    '''
+    """
 
     def __call__(self, graph):
         for node in graph.nodes:

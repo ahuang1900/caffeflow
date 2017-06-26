@@ -126,28 +126,28 @@ class Graph(object):
 
 
 class GraphBuilder(object):
-    '''Constructs a model graph from a Caffe protocol buffer definition.'''
+    """Constructs a model graph from a Caffe protocol buffer definition."""
 
     def __init__(self, def_path, phase='test'):
-        '''
+        """
         def_path: Path to the model definition (.prototxt)
         data_path: Path to the model data (.caffemodel)
         phase: Either 'test' or 'train'. Used for filtering phase-specific nodes.
-        '''
+        """
         self.def_path = def_path
         self.phase = phase
         self.params = None
         self.load()
 
     def load(self):
-        '''Load the layer definitions from the prototxt.'''
+        """Load the layer definitions from the prototxt."""
         self.params = get_caffe_resolver().NetParameter()
         with open(self.def_path) as def_file:
             text_format.Merge(def_file.read(), self.params)
         self.params.name = self.params.name if self.params.name else 'Graph'
 
     def filter_layers(self, layers):
-        '''Filter out layers based on the current phase.'''
+        """Filter out layers based on the current phase."""
         phase_map = {0: 'train', 1: 'test'}
         filtered_layer_names = set()
         filtered_layers = []
@@ -171,7 +171,7 @@ class GraphBuilder(object):
         return filtered_layers
 
     def make_node(self, layer):
-        '''Create a graph node for the given layer.'''
+        """Create a graph node for the given layer."""
         kind = NodeKind.map_raw_kind(layer.type)
         if kind is None:
             raise KaffeError('Unknown layer type encountered: %s' % layer.type)
@@ -181,13 +181,13 @@ class GraphBuilder(object):
         return Node(layer.name, kind, layer=layer)
 
     def make_input_nodes(self):
-        '''
+        """
         Create data input nodes.
 
         This method is for old-style inputs, where the input specification
         was not treated as a first-class layer in the prototext.
         Newer models use the "Input layer" type.
-        '''
+        """
         nodes = [Node(name, NodeKind.Data) for name in self.params.input]
         if len(nodes):
             input_dim = map(int, self.params.input_dim)
@@ -201,9 +201,9 @@ class GraphBuilder(object):
         return nodes
 
     def build(self):
-        '''
+        """
         Builds the graph from the Caffe layer definitions.
-        '''
+        """
         # Get the layers
         layers = self.params.layers or self.params.layer
         # Filter out phase-excluded layers

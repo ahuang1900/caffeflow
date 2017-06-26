@@ -14,7 +14,7 @@ from resnet import ResNet50, ResNet101, ResNet152
 
 
 class DataSpec(object):
-    '''Input data specifications for an ImageNet model.'''
+    """Input data specifications for an ImageNet model."""
 
     def __init__(self,
                  batch_size,
@@ -44,12 +44,12 @@ class DataSpec(object):
 
 
 def alexnet_spec(batch_size=500):
-    '''Parameters used by AlexNet and its variants.'''
+    """Parameters used by AlexNet and its variants."""
     return DataSpec(batch_size=batch_size, scale_size=256, crop_size=227, isotropic=False)
 
 
 def std_spec(batch_size, isotropic=True):
-    '''Parameters commonly used by "post-AlexNet" architectures.'''
+    """Parameters commonly used by "post-AlexNet" architectures."""
     return DataSpec(batch_size=batch_size, scale_size=256, crop_size=224, isotropic=isotropic)
 
 # Collection of sample auto-generated models
@@ -71,11 +71,11 @@ MODEL_DATA_SPECS = {
 
 
 def get_models():
-    '''Returns a tuple of sample models.'''
+    """Returns a tuple of sample models."""
     return MODELS
 
 
 def get_data_spec(model_instance=None, model_class=None):
-    '''Returns the data specifications for the given network.'''
+    """Returns the data specifications for the given network."""
     model_class = model_class or model_instance.__class__
     return MODEL_DATA_SPECS[model_class]
