@@ -136,6 +136,7 @@ class GraphBuilder(object):
         '''
         self.def_path = def_path
         self.phase = phase
+        self.params = None
         self.load()
 
     def load(self):
@@ -143,6 +144,7 @@ class GraphBuilder(object):
         self.params = get_caffe_resolver().NetParameter()
         with open(self.def_path) as def_file:
             text_format.Merge(def_file.read(), self.params)
+        self.params.name = self.params.name if self.params.name else 'Graph'
 
     def filter_layers(self, layers):
         '''Filter out layers based on the current phase.'''

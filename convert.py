@@ -59,8 +59,7 @@ def main():
                         help='The phase to convert: test (default) or train')
     args = parser.parse_args()
     validate_arguments(args)
-    convert(args.def_path, args.caffemodel, args.data_output_path, args.code_output_path,
-            args.phase)
+    convert(args.def_path, args.caffemodel, args.data_output_path, args.code_output_path, args.phase)
 
 
 if __name__ == '__main__':
