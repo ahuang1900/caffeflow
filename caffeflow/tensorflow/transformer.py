@@ -9,26 +9,6 @@ from ..transformers import (DataInjector, DataReshaper, NodeRenamer, ReLUFuser,
 from . import network
 
 
-def get_padding_type(kernel_params, input_shape, output_shape):
-    """Translates Caffe's numeric padding to one of ('SAME', 'VALID').
-    Caffe supports arbitrary padding values, while TensorFlow only
-    supports 'SAME' and 'VALID' modes. So, not all Caffe paddings
-    can be translated to TensorFlow. There are some subtleties to
-    how the padding edge-cases are handled. These are described here:
-    https://github.com/Yangqing/caffe2/blob/master/caffe2/proto/caffe2_legacy.proto
-    """
-    k_h, k_w, s_h, s_w, p_h, p_w = kernel_params
-    s_o_h = np.ceil(input_shape.height / float(s_h))
-    s_o_w = np.ceil(input_shape.width / float(s_w))
-    if (output_shape.height == s_o_h) and (output_shape.width == s_o_w):
-        return 'SAME'
-    v_o_h = np.ceil((input_shape.height - k_h + 1.0) / float(s_h))
-    v_o_w = np.ceil((input_shape.width - k_w + 1.0) / float(s_w))
-    if (output_shape.height == v_o_h) and (output_shape.width == v_o_w):
-        return 'VALID'
-    return None
-
-
 class TensorFlowNode(object):
     """An intermediate representation for TensorFlow operations."""
 
@@ -79,13 +59,11 @@ class TensorFlowMapper(NodeMapper):
 
     def get_kernel_params(self, node):
         kernel_params = node.layer.kernel_parameters
-        input_shape = node.get_only_parent().output_shape
-        padding = get_padding_type(kernel_params, input_shape, node.output_shape)
-        # Only emit the padding if it's not the default value.
-        if padding:
-            padding = {'padding': padding} if padding != network.DEFAULT_PADDING else {}
-        else:
-            padding = {'p_h': kernel_params.p_h, 'p_w': kernel_params.p_w}
+        padding = {}
+        if kernel_params.pad_h:
+            padding['pad_h'] = kernel_params.pad_h
+        if kernel_params.pad_w:
+            padding['pad_w'] = kernel_params.pad_w
         return kernel_params, padding
 
     def map_convolution(self, node):

@@ -1,8 +1,6 @@
 import numpy as np
 import tensorflow as tf
 
-DEFAULT_PADDING = 'SAME'
-
 
 def layer(op):
     """Decorator for composable network layers."""
@@ -29,9 +27,8 @@ def layer(op):
     return layer_decorated
 
 
-def validate_padding(padding):
-    """Verifies that the padding is one of the supported ones."""
-    assert padding in ('SAME', 'VALID')
+def format_padding(pad_h, pad_w):
+    return [[0, 0], [pad_h, pad_h], [pad_w, pad_w], [0, 0]]
 
 
 class Network(object):
@@ -111,16 +108,10 @@ class Network(object):
              s_w,
              name,
              relu=True,
-             padding=DEFAULT_PADDING,
-             p_h=None,
-             p_w=None,
+             pad_h=0,
+             pad_w=0,
              group=1,
              biased=True):
-        if p_h or p_w:
-            padding = 'VALID'
-        else:
-            # Verify that the padding is acceptable
-            validate_padding(padding)
         # Get the number of channels in the input
         c_i = input_.get_shape()[-1]
         # Verify that the grouping parameter is valid
@@ -129,32 +120,22 @@ class Network(object):
 
         # Convolution for a given input and kernel
         def convolve(i_, k_):
-            return tf.nn.conv2d(i_, k_, [1, s_h, s_w, 1], padding=padding)
+            return tf.nn.conv2d(i_, k_, [1, s_h, s_w, 1], padding='VALID')
 
         with tf.variable_scope(name) as scope:
             kernel = self.make_var('weights', shape=[k_h, k_w, c_i / group, c_o])
             if group == 1:
                 # This is the common-case. Convolve the input without any further complications.
-                if p_h or p_w:
-                    paddings = []
-                    if p_h:
-                        paddings.append([1, p_h])
-                    if p_w:
-                        paddings.append([2, p_w])
-                    input_ = tf.pad(input_, paddings)
+                if pad_h or pad_w:
+                    input_ = tf.pad(input_, format_padding(pad_h, pad_w))
 
                 output = convolve(input_, kernel)
             else:
                 # Split the input into groups and then convolve each of them independently
                 input_groups = tf.split(input_, group, 3)
 
-                if p_h or p_w:
-                    paddings = []
-                    if p_h:
-                        paddings.append([1, p_h])
-                    if p_w:
-                        paddings.append([2, p_w])
-                    input_groups = [tf.pad(i, paddings) for i in input_groups]
+                if pad_h or pad_w:
+                    input_groups = [tf.pad(i, format_padding(pad_h, pad_w)) for i in input_groups]
 
                 kernel_groups = tf.split(kernel, group, 3)
                 output_groups = [convolve(i, k) for i, k in zip(input_groups, kernel_groups)]
@@ -174,43 +155,25 @@ class Network(object):
         return tf.nn.relu(input_, name=name)
 
     @layer
-    def max_pool(self, input_, k_h, k_w, s_h, s_w, name, padding=DEFAULT_PADDING, p_h=None, p_w=None):
-        if p_h or p_w:
-            padding = 'VALID'
-
-            paddings = []
-            if p_h:
-                paddings.append([1, p_h])
-            if p_w:
-                paddings.append([2, p_w])
-            input_ = tf.pad(input_, paddings)
-        else:
-            validate_padding(padding)
+    def max_pool(self, input_, k_h, k_w, s_h, s_w, name, pad_h=0, pad_w=0):
+        if pad_h or pad_w:
+            input_ = tf.pad(input_, format_padding(pad_h, pad_w))
 
         return tf.nn.max_pool(input_,
                               ksize=[1, k_h, k_w, 1],
                               strides=[1, s_h, s_w, 1],
-                              padding=padding,
+                              padding='VALID',
                               name=name)
 
     @layer
-    def avg_pool(self, input_, k_h, k_w, s_h, s_w, name, padding=DEFAULT_PADDING, p_h=None, p_w=None):
-        if p_h or p_w:
-            padding = 'VALID'
-
-            paddings = []
-            if p_h:
-                paddings.append([1, p_h])
-            if p_w:
-                paddings.append([2, p_w])
-            input_ = tf.pad(input_, paddings)
-        else:
-            validate_padding(padding)
+    def avg_pool(self, input_, k_h, k_w, s_h, s_w, name, pad_h=0, pad_w=0):
+        if pad_h or pad_w:
+            input_ = tf.pad(input_, format_padding(pad_h, pad_w))
 
         return tf.nn.avg_pool(input_,
                               ksize=[1, k_h, k_w, 1],
                               strides=[1, s_h, s_w, 1],
-                              padding=padding,
+                              padding='VALID',
                               name=name)
 
     @layer
