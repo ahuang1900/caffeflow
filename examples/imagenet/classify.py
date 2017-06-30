@@ -36,7 +36,7 @@ def classify(model_data_path, image_paths):
                                 shape=(None, spec.crop_size, spec.crop_size, spec.channels))
 
     # Construct the network
-    net = models.GoogleNet({'data': input_node})
+    net = models
 
     # Create an image producer (loads and processes images in parallel)
     image_producer = dataset.ImageProducer(image_paths=image_paths, data_spec=spec)

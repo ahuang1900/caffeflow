@@ -29,8 +29,12 @@ def layer(op):
     return layer_decorated
 
 
-class Network(object):
+def validate_padding(padding):
+    """Verifies that the padding is one of the supported ones."""
+    assert padding in ('SAME', 'VALID')
 
+
+class Network(object):
     def __init__(self, inputs, trainable=True):
         # The input nodes for this network
         self.inputs = inputs
@@ -97,13 +101,9 @@ class Network(object):
         """Creates a new TensorFlow variable."""
         return tf.get_variable(name, shape, trainable=self.trainable)
 
-    def validate_padding(self, padding):
-        """Verifies that the padding is one of the supported ones."""
-        assert padding in ('SAME', 'VALID')
-
     @layer
     def conv(self,
-             input,
+             input_,
              k_h,
              k_w,
              c_o,
@@ -112,25 +112,50 @@ class Network(object):
              name,
              relu=True,
              padding=DEFAULT_PADDING,
+             p_h=None,
+             p_w=None,
              group=1,
              biased=True):
-        # Verify that the padding is acceptable
-        self.validate_padding(padding)
+        if p_h or p_w:
+            padding = 'VALID'
+        else:
+            # Verify that the padding is acceptable
+            validate_padding(padding)
         # Get the number of channels in the input
-        c_i = input.get_shape()[-1]
+        c_i = input_.get_shape()[-1]
         # Verify that the grouping parameter is valid
         assert c_i % group == 0
         assert c_o % group == 0
+
         # Convolution for a given input and kernel
-        convolve = lambda i, k: tf.nn.conv2d(i, k, [1, s_h, s_w, 1], padding=padding)
+        def convolve(i_, k_):
+            return tf.nn.conv2d(i_, k_, [1, s_h, s_w, 1], padding=padding)
+
         with tf.variable_scope(name) as scope:
             kernel = self.make_var('weights', shape=[k_h, k_w, c_i / group, c_o])
             if group == 1:
                 # This is the common-case. Convolve the input without any further complications.
-                output = convolve(input, kernel)
+                if p_h or p_w:
+                    paddings = []
+                    if p_h:
+                        paddings.append([1, p_h])
+                    if p_w:
+                        paddings.append([2, p_w])
+                    input_ = tf.pad(input_, paddings)
+
+                output = convolve(input_, kernel)
             else:
                 # Split the input into groups and then convolve each of them independently
-                input_groups = tf.split(input,group, 3)
+                input_groups = tf.split(input_, group, 3)
+
+                if p_h or p_w:
+                    paddings = []
+                    if p_h:
+                        paddings.append([1, p_h])
+                    if p_w:
+                        paddings.append([2, p_w])
+                    input_groups = [tf.pad(i, paddings) for i in input_groups]
+
                 kernel_groups = tf.split(kernel, group, 3)
                 output_groups = [convolve(i, k) for i, k in zip(input_groups, kernel_groups)]
                 # Concatenate the groups
@@ -145,30 +170,52 @@ class Network(object):
             return output
 
     @layer
-    def relu(self, input, name):
-        return tf.nn.relu(input, name=name)
+    def relu(self, input_, name):
+        return tf.nn.relu(input_, name=name)
 
     @layer
-    def max_pool(self, input, k_h, k_w, s_h, s_w, name, padding=DEFAULT_PADDING):
-        self.validate_padding(padding)
-        return tf.nn.max_pool(input,
+    def max_pool(self, input_, k_h, k_w, s_h, s_w, name, padding=DEFAULT_PADDING, p_h=None, p_w=None):
+        if p_h or p_w:
+            padding = 'VALID'
+
+            paddings = []
+            if p_h:
+                paddings.append([1, p_h])
+            if p_w:
+                paddings.append([2, p_w])
+            input_ = tf.pad(input_, paddings)
+        else:
+            validate_padding(padding)
+
+        return tf.nn.max_pool(input_,
                               ksize=[1, k_h, k_w, 1],
                               strides=[1, s_h, s_w, 1],
                               padding=padding,
                               name=name)
 
     @layer
-    def avg_pool(self, input, k_h, k_w, s_h, s_w, name, padding=DEFAULT_PADDING):
-        self.validate_padding(padding)
-        return tf.nn.avg_pool(input,
+    def avg_pool(self, input_, k_h, k_w, s_h, s_w, name, padding=DEFAULT_PADDING, p_h=None, p_w=None):
+        if p_h or p_w:
+            padding = 'VALID'
+
+            paddings = []
+            if p_h:
+                paddings.append([1, p_h])
+            if p_w:
+                paddings.append([2, p_w])
+            input_ = tf.pad(input_, paddings)
+        else:
+            validate_padding(padding)
+
+        return tf.nn.avg_pool(input_,
                               ksize=[1, k_h, k_w, 1],
                               strides=[1, s_h, s_w, 1],
                               padding=padding,
                               name=name)
 
     @layer
-    def lrn(self, input, radius, alpha, beta, name, bias=1.0):
-        return tf.nn.local_response_normalization(input,
+    def lrn(self, input_, radius, alpha, beta, name, bias=1.0):
+        return tf.nn.local_response_normalization(input_,
                                                   depth_radius=radius,
                                                   alpha=alpha,
                                                   beta=beta,
@@ -177,24 +224,24 @@ class Network(object):
 
     @layer
     def concat(self, inputs, axis, name):
-        return tf.concat(values=inputs, axis=axis,  name=name)
+        return tf.concat(values=inputs, axis=axis, name=name)
 
     @layer
     def add(self, inputs, name):
         return tf.add_n(inputs, name=name)
 
     @layer
-    def fc(self, input, num_out, name, relu=True):
+    def fc(self, input_, num_out, name, relu=True):
         with tf.variable_scope(name) as scope:
-            input_shape = input.get_shape()
+            input_shape = input_.get_shape()
             if input_shape.ndims == 4:
                 # The input is spatial. Vectorize it first.
                 dim = 1
                 for d in input_shape[1:].as_list():
                     dim *= d
-                feed_in = tf.reshape(input, [-1, dim])
+                feed_in = tf.reshape(input_, [-1, dim])
             else:
-                feed_in, dim = (input, input_shape[-1].value)
+                feed_in, dim = (input_, input_shape[-1].value)
             weights = self.make_var('weights', shape=[dim, num_out])
             biases = self.make_var('biases', [num_out])
             op = tf.nn.relu_layer if relu else tf.nn.xw_plus_b
@@ -202,30 +249,30 @@ class Network(object):
             return fc
 
     @layer
-    def softmax(self, input, name):
-        input_shape = map(lambda v: v.value, input.get_shape())
+    def softmax(self, input_, name):
+        input_shape = map(lambda v: v.value, input_.get_shape())
         if len(input_shape) > 2:
             # For certain models (like NiN), the singleton spatial dimensions
             # need to be explicitly squeezed, since they're not broadcast-able
             # in TensorFlow's NHWC ordering (unlike Caffe's NCHW).
             if input_shape[1] == 1 and input_shape[2] == 1:
-                input = tf.squeeze(input, squeeze_dims=[1, 2])
+                input_ = tf.squeeze(input_, squeeze_dims=[1, 2])
             else:
                 raise ValueError('Rank 2 tensor input expected for softmax!')
-        return tf.nn.softmax(input, name=name)
+        return tf.nn.softmax(input_, name=name)
 
     @layer
-    def batch_normalization(self, input, name, scale_offset=True, relu=False):
+    def batch_normalization(self, input_, name, scale_offset=True, relu=False):
         # NOTE: Currently, only inference is supported
-        with tf.variable_scope(name) as scope:
-            shape = [input.get_shape()[-1]]
+        with tf.variable_scope(name):
+            shape = [input_.get_shape()[-1]]
             if scale_offset:
                 scale = self.make_var('scale', shape=shape)
                 offset = self.make_var('offset', shape=shape)
             else:
                 scale, offset = (None, None)
             output = tf.nn.batch_normalization(
-                input,
+                input_,
                 mean=self.make_var('mean', shape=shape),
                 variance=self.make_var('variance', shape=shape),
                 offset=offset,
@@ -239,6 +286,6 @@ class Network(object):
             return output
 
     @layer
-    def dropout(self, input, keep_prob, name):
+    def dropout(self, input_, keep_prob, name):
         keep = 1 - self.use_dropout + (self.use_dropout * keep_prob)
-        return tf.nn.dropout(input, keep, name=name)
+        return tf.nn.dropout(input_, keep, name=name)

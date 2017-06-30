@@ -44,7 +44,7 @@ train_op = opt.minimize(loss)
 with tf.Session() as sess:
     # Load the data
     sess.run(tf.initialize_all_variables())
-    net.load('mynet.npy', sess)
+    load('mynet.npy', sess)
 
     data_gen = gen_data_batch(mnist.train)
     for i in range(1000):

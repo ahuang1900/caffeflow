@@ -82,15 +82,17 @@ class TensorFlowMapper(NodeMapper):
         input_shape = node.get_only_parent().output_shape
         padding = get_padding_type(kernel_params, input_shape, node.output_shape)
         # Only emit the padding if it's not the default value.
-        padding = {'padding': padding} if padding != network.DEFAULT_PADDING else {}
-        return (kernel_params, padding)
+        if padding:
+            padding = {'padding': padding} if padding != network.DEFAULT_PADDING else {}
+        else:
+            padding = {'p_h': kernel_params.p_h, 'p_w': kernel_params.p_w}
+        return kernel_params, padding
 
     def map_convolution(self, node):
-        (kernel_params, kwargs) = self.get_kernel_params(node)
+        kernel_params, kwargs = self.get_kernel_params(node)
         h = kernel_params.kernel_h
         w = kernel_params.kernel_w
         c_o = node.output_shape[1]
-        c_i = node.parents[0].output_shape[1]
         group = node.parameters.group
         if group != 1:
             kwargs['group'] = group
@@ -118,10 +120,10 @@ class TensorFlowMapper(NodeMapper):
                               kernel_params.stride_h, kernel_params.stride_w, **padding)
 
     def map_inner_product(self, node):
-        #TODO: Axis
+        # TODO: Axis
         assert node.parameters.axis == 1
-        #TODO: Unbiased
-        assert node.parameters.bias_term == True
+        # TODO: Unbiased
+        assert node.parameters.bias_term
         return MaybeActivated(node)('fc', node.parameters.num_output)
 
     def map_softmax(self, node):

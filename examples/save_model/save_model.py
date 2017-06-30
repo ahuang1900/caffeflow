@@ -16,7 +16,7 @@ def save(name, data_input_path):
     caffe_net_module = __import__(name)
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         image_input = tf.placeholder(tf.float32, shape=[1, 227, 227, 3], name="data")
-        net = caffe_net_module.CaffeNet({'data': image_input})
+        net = caffe_net_module
 
         # Save protocol buffer
         pb_name = name + '.pb'
