@@ -110,6 +110,7 @@ class Network(object):
              relu=True,
              pad_h=0,
              pad_w=0,
+             operator_padding='VALID',
              group=1,
              biased=True):
         # Get the number of channels in the input
@@ -120,7 +121,7 @@ class Network(object):
 
         # Convolution for a given input and kernel
         def convolve(i_, k_):
-            return tf.nn.conv2d(i_, k_, [1, s_h, s_w, 1], padding='VALID')
+            return tf.nn.conv2d(i_, k_, [1, s_h, s_w, 1], padding=operator_padding)
 
         with tf.variable_scope(name) as scope:
             kernel = self.make_var('weights', shape=[k_h, k_w, c_i / group, c_o])
@@ -155,25 +156,25 @@ class Network(object):
         return tf.nn.relu(input_, name=name)
 
     @layer
-    def max_pool(self, input_, k_h, k_w, s_h, s_w, name, pad_h=0, pad_w=0):
+    def max_pool(self, input_, k_h, k_w, s_h, s_w, name, pad_h=0, pad_w=0, operator_padding='VALID'):
         if pad_h or pad_w:
             input_ = tf.pad(input_, format_padding(pad_h, pad_w))
 
         return tf.nn.max_pool(input_,
                               ksize=[1, k_h, k_w, 1],
                               strides=[1, s_h, s_w, 1],
-                              padding='VALID',
+                              padding=operator_padding,
                               name=name)
 
     @layer
-    def avg_pool(self, input_, k_h, k_w, s_h, s_w, name, pad_h=0, pad_w=0):
+    def avg_pool(self, input_, k_h, k_w, s_h, s_w, name, pad_h=0, pad_w=0, operator_padding='VALID'):
         if pad_h or pad_w:
             input_ = tf.pad(input_, format_padding(pad_h, pad_w))
 
         return tf.nn.avg_pool(input_,
                               ksize=[1, k_h, k_w, 1],
                               strides=[1, s_h, s_w, 1],
-                              padding='VALID',
+                              padding=operator_padding,
                               name=name)
 
     @layer

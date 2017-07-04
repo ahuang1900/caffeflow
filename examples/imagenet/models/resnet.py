@@ -198,7 +198,7 @@ class ResNet50(Network):
                    'bn5c_branch2c')
              .add(name='res5c')
              .relu(name='res5c_relu')
-             .avg_pool(7, 7, 1, 1, padding='VALID', name='pool5')
+             .avg_pool(7, 7, 1, 1, operator_padding='VALID', name='pool5')
              .fc(1000, relu=False, name='fc1000')
              .softmax(name='prob'))
 
@@ -588,7 +588,7 @@ class ResNet101(Network):
                    'bn5c_branch2c')
              .add(name='res5c')
              .relu(name='res5c_relu')
-             .avg_pool(7, 7, 1, 1, padding='VALID', name='pool5')
+             .avg_pool(7, 7, 1, 1, operator_padding='VALID', name='pool5')
              .fc(1000, relu=False, name='fc1000')
              .softmax(name='prob'))
 
@@ -1165,6 +1165,6 @@ class ResNet152(Network):
                    'bn5c_branch2c')
              .add(name='res5c')
              .relu(name='res5c_relu')
-             .avg_pool(7, 7, 1, 1, padding='VALID', name='pool5')
+             .avg_pool(7, 7, 1, 1, operator_padding='VALID', name='pool5')
              .fc(1000, relu=False, name='fc1000')
              .softmax(name='prob'))

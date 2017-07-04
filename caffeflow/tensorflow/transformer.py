@@ -56,18 +56,24 @@ class MaybeActivated(object):
 
 
 class TensorFlowMapper(NodeMapper):
+    def __init__(self, graph, use_padding_same=False):
+        super(TensorFlowMapper, self).__init__(graph)
+        self.use_padding_same = use_padding_same
 
-    def get_kernel_params(self, node):
+    def get_kernel_params(self, node, use_padding_same=False):
         kernel_params = node.layer.kernel_parameters
         padding = {}
-        if kernel_params.pad_h:
-            padding['pad_h'] = kernel_params.pad_h
-        if kernel_params.pad_w:
-            padding['pad_w'] = kernel_params.pad_w
+        if use_padding_same:
+            padding['operator_padding'] = 'SAME'
+        else:
+            if kernel_params.pad_h:
+                padding['pad_h'] = kernel_params.pad_h
+            if kernel_params.pad_w:
+                padding['pad_w'] = kernel_params.pad_w
         return kernel_params, padding
 
     def map_convolution(self, node):
-        kernel_params, kwargs = self.get_kernel_params(node)
+        kernel_params, kwargs = self.get_kernel_params(node, use_padding_same=self.use_padding_same)
         h = kernel_params.kernel_h
         w = kernel_params.kernel_w
         c_o = node.output_shape[1]
@@ -195,12 +201,13 @@ class TensorFlowEmitter(object):
 
 class TensorFlowTransformer(object):
 
-    def __init__(self, def_path, data_path, verbose=True, phase='test'):
+    def __init__(self, def_path, data_path, verbose=True, phase='test', use_padding_same=False):
         self.verbose = verbose
         self.phase = phase
         self.load(def_path, data_path, phase)
         self.params = None
         self.source = None
+        self.use_padding_same = use_padding_same
 
     def load(self, def_path, data_path, phase):
         # Build the graph
@@ -258,7 +265,7 @@ class TensorFlowTransformer(object):
 
     def transform_source(self):
         if self.source is None:
-            mapper = TensorFlowMapper(self.graph)
+            mapper = TensorFlowMapper(self.graph, use_padding_same=self.use_padding_same)
             chains = mapper.map()
             emitter = TensorFlowEmitter()
             self.source = emitter.emit(self.graph.name, chains)
