@@ -36,13 +36,4 @@ def has_pycaffe():
     return get_caffe_resolver().has_pycaffe()
 
 def show_fallback_warning():
-    msg = '''
-------------------------------------------------------------
-    WARNING: PyCaffe not found!
-    Falling back to a pure protocol buffer implementation.
-    * Conversions will be drastically slower.
-    * This backend is UNTESTED!
-------------------------------------------------------------
-
-'''
-    sys.stderr.write(msg)
+    sys.stderr.write("INFO: PyCaffe not found! Falling back to the bundled protobuf.\n")
