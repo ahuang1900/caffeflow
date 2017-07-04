@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
 import numpy as np
@@ -32,6 +33,7 @@ def convert(def_path, caffemodel_path, data_output_path, code_output_path, phase
             dirname = os.path.dirname(data_output_path)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
+            # noinspection PyTypeChecker
             with open(data_output_path, 'wb') as data_out:
                 np.save(data_out, data)
         if code_output_path:
@@ -40,7 +42,8 @@ def convert(def_path, caffemodel_path, data_output_path, code_output_path, phase
             dirname = os.path.dirname(code_output_path)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
-            with open(code_output_path, 'wb') as src_out:
+            # noinspection PyTypeChecker
+            with open(code_output_path, 'w') as src_out:
                 src_out.write(transformer.transform_source())
         print_stderr('Done.')
     except KaffeError as err:

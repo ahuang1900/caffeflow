@@ -1,4 +1,6 @@
-import numpy as np
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+from six import string_types
 
 from ..errors import KaffeError, print_stderr
 from ..graph import GraphBuilder, NodeMapper
@@ -6,12 +8,9 @@ from ..layers import NodeKind
 from ..transformers import (DataInjector, DataReshaper, NodeRenamer, ReLUFuser,
                             BatchNormScaleBiasFuser, BatchNormPreprocessor, ParameterNamer)
 
-from . import network
-
 
 class TensorFlowNode(object):
     """An intermediate representation for TensorFlow operations."""
-
     def __init__(self, op, *args, **kwargs):
         # A string corresponding to the TensorFlow operation
         self.op = op
@@ -24,7 +23,7 @@ class TensorFlowNode(object):
 
     def format(self, arg):
         """Returns a string representation for the given value."""
-        return "'%s'" % arg if isinstance(arg, basestring) else str(arg)
+        return "'%s'" % arg if isinstance(arg, string_types) else str(arg)
 
     def pair(self, key, value):
         """Returns key=formatted(value)."""
@@ -33,7 +32,7 @@ class TensorFlowNode(object):
     def emit(self):
         """Emits the Python source for this node."""
         # Format positional arguments
-        args = map(self.format, self.args)
+        args = [self.format(arg) for arg in self.args]
         # Format any keyword arguments
         if self.kwargs:
             args += [self.pair(k, v) for k, v in self.kwargs]
@@ -44,7 +43,6 @@ class TensorFlowNode(object):
 
 
 class MaybeActivated(object):
-
     def __init__(self, node, default=True):
         self.inject_kwargs = {}
         if node.metadata.get('relu', False) != default:
@@ -149,7 +147,6 @@ class TensorFlowMapper(NodeMapper):
 
 
 class TensorFlowEmitter(object):
-
     def __init__(self, tab=None):
         self.tab = tab or ' ' * 4
         self.prefix = ''
@@ -200,8 +197,9 @@ class TensorFlowEmitter(object):
 
 
 class TensorFlowTransformer(object):
-
     def __init__(self, def_path, data_path, verbose=True, phase='test', use_padding_same=False):
+        self.graph = None
+
         self.verbose = verbose
         self.phase = phase
         self.load(def_path, data_path, phase)

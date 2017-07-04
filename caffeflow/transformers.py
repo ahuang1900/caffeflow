@@ -1,8 +1,8 @@
-"""
-A collection of graph transforms.
+"""A collection of graph transforms.
 
-A transformer is a callable that accepts a graph and returns a transformed version.
-"""
+A transformer is a callable that accepts a graph and returns a transformed version."""
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import numpy as np
 
@@ -12,10 +12,7 @@ from .layers import NodeKind
 
 
 class DataInjector(object):
-    """
-    Associates parameters loaded from a .caffemodel file with their corresponding nodes.
-    """
-
+    """Associates parameters loaded from a .caffemodel file with their corresponding nodes."""
     def __init__(self, def_path, data_path):
         # The .prototxt file defining the graph
         self.def_path = def_path
@@ -42,8 +39,13 @@ class DataInjector(object):
 
     def load_using_pb(self):
         data = get_caffe_resolver().NetParameter()
-        data.MergeFromString(open(self.data_path, 'rb').read())
-        pair = lambda layer: (layer.name, self.normalize_pb_data(layer))
+        # noinspection PyTypeChecker
+        with open(self.data_path, 'rb') as file_:
+            data.MergeFromString(file_.read())
+
+        def pair(layer_):
+            return layer_.name, self.normalize_pb_data(layer_)
+
         layers = data.layers or data.layer
         self.params = [pair(layer) for layer in layers if layer.blobs]
         self.did_use_pb = True

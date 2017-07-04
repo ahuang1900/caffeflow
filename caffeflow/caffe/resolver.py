@@ -1,6 +1,9 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import sys
 
 SHARED_CAFFE_RESOLVER = None
+
 
 class CaffeResolver(object):
     def __init__(self):
